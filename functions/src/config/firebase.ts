@@ -5,13 +5,9 @@ initializeApp();
 
 const db = getFirestore();
 
-const entry = db.collection("entries").doc();
+const entry = db.collection("movieDatabase").doc();
 
-const entryObject = {
-  id: entry.id,
-  title: "entry title here",
-  text: "entry text here",
-};
+const entryObject = {};
 
 entry.set(entryObject);
 
