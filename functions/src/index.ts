@@ -21,7 +21,13 @@ app.post("/movies", async (req, res) => {
 
     // Extract response text
     const response = await result.response;
-    const movieRecommendations = response.text();
+    const responseText = response.text();
+
+    // Put movie recommendations in an array, remove any newlines, and strip asterisks
+    const movieRecommendations = responseText
+      .split('\n')
+      .map(movie => movie.replace(/^\*+\s*/, '').trim())
+      .filter(movie => movie);
 
     // Add results to firestore collection
     const entry = db.collection("movieDatabase").doc();
@@ -30,12 +36,11 @@ app.post("/movies", async (req, res) => {
       prompt: prompt,
       result: movieRecommendations,
     };
-    entry.set(entryObject);
+    await entry.set(entryObject);
 
     // Send response
     res.send({ Recommendations: movieRecommendations });
 
-    // Return error 
   } catch (error) {
     console.error(error);
     res.status(500).send("Error generating movie recommendations.");
