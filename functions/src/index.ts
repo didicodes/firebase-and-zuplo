@@ -6,7 +6,7 @@ import * as express from "express";
 
 const app = express();
 
-app.post("/getMovies", async (req, res) => {
+app.post("/movies", async (req, res) => {
   try {
     // Initialize Google API Key
     const geminiApiKey = defineSecret('API_KEY');
@@ -43,7 +43,7 @@ app.post("/getMovies", async (req, res) => {
 });
 
 // Return all results in the firestore collection
-app.get("/getHistory", async (req, res) => {
+app.get("/history", async (req, res) => {
   try {
     const allEntries = await db.collection("movieDatabase").get();
     return res.status(200).json(allEntries.docs);
