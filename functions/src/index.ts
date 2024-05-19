@@ -8,13 +8,21 @@ const app = express();
 
 app.post("/movies", async (req, res) => {
   try {
+    // Extract genre from request body
+    const genre = req.body.message;
+
+    // Check if genre is provided
+    if (!genre) {
+      return res.status(400).send("Error: Genre is required.");
+    }
+
     // Initialize Google API Key
     const geminiApiKey = defineSecret('API_KEY');
     const genAI = new GoogleGenerativeAI(geminiApiKey.value());
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-    // Extract prompt from request body if available
-    const prompt = req.body.prompt;
+    // Create prompt with the genre
+    const prompt = `Recommend a list of movies to me based on the ${genre} genre. Only respond with the movie recommendations without adding any other information. Generate new recommendations each time I send a message`;
 
     // Generate content based on the prompt
     const result = await model.generateContent(prompt);
@@ -23,13 +31,13 @@ app.post("/movies", async (req, res) => {
     const response = await result.response;
     const responseText = response.text();
 
-    // Put movie recommendations in an array, remove any newlines, and strip asterisks
+    // Put movie recommendations in an array, remove any newlines, numbering, and asterisks
     const movieRecommendations = responseText
-      .split('\n')
-      .map(movie => movie.replace(/^\*+\s*/, '').trim())
-      .filter(movie => movie);
+      .split('\n')  // Split by new lines
+      .map(movie => movie.replace(/^[\d\*]+\.\s*|\*\s*/g, '').trim())  // Remove leading numbers, dots, asterisks, and trim
+      .filter(movie => movie);  // Remove any empty strings
 
-    // Add results to firestore collection
+    // Add results to Firestore collection
     const entry = db.collection("movieDatabase").doc();
     const entryObject = {
       id: entry.id,
@@ -39,13 +47,14 @@ app.post("/movies", async (req, res) => {
     await entry.set(entryObject);
 
     // Send response
-    res.send({ Recommendations: movieRecommendations });
+    res.send({ "Movie recommendations": movieRecommendations });
 
   } catch (error) {
     console.error(error);
     res.status(500).send("Error generating movie recommendations.");
   }
 });
+
 
 // Return all results in the firestore collection
 app.get("/history", async (req, res) => {
