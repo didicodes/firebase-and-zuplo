@@ -5,7 +5,7 @@ initializeApp();
 
 const db = getFirestore();
 
-const entry = db.collection("movieDatabase").doc();
+const entry = db.collection("movieRecommendationDatabase").doc();
 
 const entryObject = {};
 

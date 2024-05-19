@@ -9,11 +9,11 @@ const app = express();
 app.post("/movies", async (req, res) => {
   try {
     // Extract genre from request body
-    const genre = req.body.message;
+    const genre = req.body.genre;
 
     // Check if genre is provided
     if (!genre) {
-      return res.status(400).send("Error: Genre is required.");
+      throw new Error("Genre is required.");
     }
 
     // Initialize Google API Key
@@ -31,14 +31,14 @@ app.post("/movies", async (req, res) => {
     const response = await result.response;
     const responseText = response.text();
 
-    // Put movie recommendations in an array, remove any newlines, numbering, and asterisks
+    // Put movie recommendations in an array, remove any newlines, numbering, asterisks, and hyphens
     const movieRecommendations = responseText
       .split('\n')  // Split by new lines
-      .map(movie => movie.replace(/^[\d\*]+\.\s*|\*\s*/g, '').trim())  // Remove leading numbers, dots, asterisks, and trim
+      .map(movie => movie.replace(/^[\d\*\-]+\.\s*|\*\s*|\-\s*/g, '').trim())  // Remove leading numbers, dots, asterisks, hyphens, and trim
       .filter(movie => movie);  // Remove any empty strings
 
     // Add results to Firestore collection
-    const entry = db.collection("movieDatabase").doc();
+    const entry = db.collection("movieRecommendationDatabase").doc();
     const entryObject = {
       id: entry.id,
       prompt: prompt,
@@ -51,10 +51,13 @@ app.post("/movies", async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).send("Error generating movie recommendations.");
+    if (error.message === "Genre is required.") {
+      res.status(400).send(error.message);
+    } else {
+      res.status(500).send("Error generating movie recommendations.");
+    }
   }
 });
-
 
 // Return all results in the firestore collection
 app.get("/history", async (req, res) => {
