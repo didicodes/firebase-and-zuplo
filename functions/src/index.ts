@@ -62,7 +62,7 @@ app.post("/movies", async (req, res) => {
 // Return all results in the firestore collection
 app.get("/history", async (req, res) => {
   try {
-    const allEntries = await db.collection("movieDatabase").get();
+    const allEntries = await db.collection("movieRecommendationDatabase").get();
     return res.status(200).json(allEntries.docs);
   } catch (error) {
     return res.status(500).json("We found an error fetching your request!");
