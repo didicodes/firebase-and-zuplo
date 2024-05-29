@@ -8,10 +8,12 @@ const app = express();
 
 app.post("/movies", async (req, res) => {
   try {
+
+    const userId = req.headers['userid'];
+
     // Extract genre from request body
     const genre = req.body.genre;
 
-    // Check if genre is provided
     if (!genre) {
       throw new Error("Genre is required.");
     }
@@ -33,21 +35,22 @@ app.post("/movies", async (req, res) => {
 
     // Put movie recommendations in an array, remove any newlines, numbering, asterisks, and hyphens
     const movieRecommendations = responseText
-      .split('\n')  // Split by new lines
-      .map(movie => movie.replace(/^[\d\*\-]+\.\s*|\*\s*|\-\s*/g, '').trim())  // Remove leading numbers, dots, asterisks, hyphens, and trim
-      .filter(movie => movie);  // Remove any empty strings
+      .split('\n')
+      .map(movie => movie.replace(/^[\d\*\-]+\.\s*|\*\s*|\-\s*/g, '').trim())
+      .filter(movie => movie);
 
     // Add results to Firestore collection
     const entry = db.collection("movieRecommendationDatabase").doc();
     const entryObject = {
       id: entry.id,
+      userId: userId,
       prompt: prompt,
-      result: movieRecommendations,
+      result: movieRecommendations
     };
     await entry.set(entryObject);
 
     // Send response
-    res.send({ "Movie recommendations": movieRecommendations });
+    res.send({ "movie_recommendations": movieRecommendations });
 
   } catch (error) {
     console.error(error);
@@ -70,5 +73,4 @@ app.get("/history", async (req, res) => {
 
 });
 
-// Export Express app as Firebase Function
 exports.app = onRequest(app);
